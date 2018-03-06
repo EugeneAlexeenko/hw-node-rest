@@ -1,68 +1,69 @@
-const axios = require('axios');
-const express = require('express');
-const mongoose = require('mongoose');
-
 const config = require('./config');
+
+const express = require('express');
+const app = express();
+const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser'); 
+const passport = require('passport');
+const axios = require('axios');
+const mongoose = require('mongoose');
 
 const DOG_API_URL = config.dogApiUrl; 
 const MONGO_DB_PATH = config.mongoDbPath;
 const PORT = config.port;
 
-const app = express();
-
 mongoose.connect(MONGO_DB_PATH); 
 const Schema = mongoose.Schema;
-const BreedDataSchema = new Schema({
+
+const BreedSchema = new Schema({
   breed: String,
+  imgUrl: String
 });
 
-const BreedData = mongoose.model('breedData', BreedDataSchema);
-
+const Breed = mongoose.model('breed', BreedSchema);
 
 axios.get(`${DOG_API_URL}/breeds/list`)
   .then(response => {
     console.log(`dog brees received succesfully!`);
-    let breeds = response.data.message;
-    fillDB(breeds);
+    let breedList = response.data.message;
+    fillDB(breedList);
   })
   .catch(err => console.log(err));
 
-function fillDB (breeds) {
-  breeds.forEach(breed => {
-    let data = new BreedData({
-      breed: breed
+function fillDB (breedList) {
+  breedList.forEach(breed => {
+    let data = new Breed({
+      breed
     });  
     data.save();
   }); 
 }
 
-// Router
 app.get('/', (req, res) => {
   res.send('hello from express');
 });
 
+// Login page
+app.post('/login', (req, res) => {
+  res.send('Welcome on login page');
+});
+
+// Get all breads collection
 app.get('/breeds', (req, res) => {
   res.send(breeds.toString());
 });
 
+// Get image by breed
 app.get('/breed/:id', (req, res) => {
-  console.log(req.params.id);
   const breed = req.params.id;
-  let image;
 
   axios.get(`${DOG_API_URL}/breed/${breed}/images/random`)
     .then(response => {
-      console.log(`Breed ${breed} received!`);
-      console.log(response.data.message);
-      image = response.data.message;
-      res.send(image);
+      imgUrl = response.data.message;
+      res.send(imgUrl);
     })
     .catch(err => console.log(err));
-})
-
-// app.get(`${pokeApi}/pokemon/:id`, (req, res) => {
-//   res.send(req.params);
-// });
+});
 
 app.listen(PORT, (err) => {
   if (err) {
